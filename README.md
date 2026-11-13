@@ -5,13 +5,15 @@ A matchmaking quest for the browser. A man who wants a date with Shalini passes 
 Human Design), love languages, strengths and weaknesses, past relationships, caretaking, family,
 and desire. At the end he reviews his answers, then copies or downloads them and sends them to Shalini.
 
-Built with [p5.js](https://p5js.org/) (the living saffron sky, tiger stripes, marigold petals and
-the zodiac wheel) over plain HTML forms, as a static site for GitHub Pages. No build step.
+It opens with Shalini's own story, then the trials. The look is lavender minimalism: white space,
+thin lines and quiet type, with [p5.js](https://p5js.org/) drawing the softly drifting lavender
+backdrop and the zodiac wheel over plain HTML forms. A static site for GitHub Pages, no build step.
 
 ## The quest
 
 | Step | What he answers |
 |---|---|
+| How I got here | Her story, in her own words ([`src/story.js`](src/story.js)) |
 | Who approaches? | Name, age (18+), city, how to reach him |
 | I · Gate of Truth | Drinking, drugs, past marriage, kids, prenup, number of partners. One card at a time. |
 | II · Trial of Fire | Colbert-style rapid fire questions |
@@ -74,6 +76,7 @@ on every push to `main`, at
 
 | To change | Edit |
 |---|---|
+| Her story | [`src/story.js`](src/story.js) |
 | Questions, options, kinks list | [`src/questions.js`](src/questions.js) |
 | Dealbreakers, your signs, the optional form | [`config.js`](config.js) |
 | Photos | Replace the files in [`assets/photos/`](assets/photos/) (keep the names), or add one in `PHOTOS` in `src/questions.js` |
@@ -103,5 +106,4 @@ Form. It saves screenshots to `screenshots/` and needs Playwright installed.
 ## Credits
 
 p5.js 2.3.4 is vendored in `vendor/` under the LGPL 2.1 (see `vendor/P5-LICENSE.txt`). Fonts:
-Cinzel Decorative, Cormorant Garamond and Outfit from Google Fonts. The look takes its colours
-from traditional Pahari paintings of Durga riding her tiger.
+Cormorant Garamond and Outfit from Google Fonts.

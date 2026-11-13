@@ -8,12 +8,13 @@ import { buildPayload, payloadToText, send, isConfigured } from './submit.js';
 import { el, renderQuestion, missingRequired } from './ui.js';
 import { createBackground } from './background.js';
 import { createZodiac } from './zodiac.js';
+import { STORY } from './story.js';
 
 const STORE_KEY = 'goddess-quest-v1';
-const STEPS = ['gate', ...SECTIONS.map((s) => s.id), 'summary', 'end'];
+const STEPS = ['gate', 'story', ...SECTIONS.map((s) => s.id), 'summary', 'end'];
 const TRIALS = SECTIONS.filter((s) => s.id !== 'intro');
 const MOODS = {
-  gate: 'dawn', intro: 'dawn', truth: 'fire', fire: 'fire', stars: 'night', heart: 'rose',
+  gate: 'dawn', story: 'dawn', intro: 'dawn', truth: 'fire', fire: 'fire', stars: 'night', heart: 'rose',
   mirror: 'dawn', memory: 'rose', vow: 'fire', hearth: 'dawn', desire: 'desire', summary: 'dawn', end: 'dawn',
 };
 const GODDESS = CONFIG.goddessName;
@@ -74,6 +75,7 @@ function render(focus = true) {
   app.replaceChildren();
   const step = state.step;
   if (step === 'gate') renderGate();
+  else if (step === 'story') renderStory();
   else if (step === 'summary') renderSummary();
   else if (step === 'end') renderEnd();
   else {
@@ -91,7 +93,7 @@ function render(focus = true) {
 
 function renderGate() {
   const resumable = Object.keys(state.answers).length > 0 && !state.finished;
-  const begin = () => { bg.celebrate(); go('intro'); };
+  const begin = () => { bg.celebrate(); go('story'); };
   app.append(
     el('section', { class: 'gate' },
       el('div', { class: 'tarot', 'aria-hidden': 'true' },
@@ -101,11 +103,11 @@ function renderGate() {
       el('div', { class: 'gate-text' },
         el('p', { class: 'kicker', text: `A quest for one man, set by ${GODDESS}` }),
         el('h1', { tabindex: '-1' }, 'Worthy of the ', el('em', { text: 'Goddess' })),
-        el('p', { class: 'lead', text: `She rides tigers, wears witch hats, and knows exactly what she wants. Nine trials stand between you and a date with ${GODDESS}. Answer honestly; the goddess can tell.` }),
+        el('p', { class: 'lead', text: `She wears witch hats, speaks eight languages, and knows exactly what she wants. Nine trials stand between you and a date with ${GODDESS}. Answer honestly; the goddess can tell.` }),
         el('ul', { class: 'promises' },
-          el('li', { text: '⏳ About 20 minutes. Your progress is saved on this device.' }),
-          el('li', { text: `🔒 Nothing is sent anywhere. At the end you send your answers to ${GODDESS} yourself.` }),
-          el('li', { text: '🔞 For men 18 and over. One trial is very personal.' })),
+          el('li', { text: 'About 20 minutes. Your progress is saved on this device.' }),
+          el('li', { text: `Nothing is sent anywhere. At the end you send your answers to ${GODDESS} yourself.` }),
+          el('li', { text: 'For men 18 and over. One trial is very personal.' })),
         state.finished
           ? el('p', { class: 'lead', text: 'You have already completed the quest. The goddess has your offering.' })
           : el('div', { class: 'actions' },
@@ -121,6 +123,24 @@ function renderGate() {
     const btn = app.querySelector('.btn.primary');
     btn.onclick = () => { bg.celebrate(); go(firstOpen?.id ?? 'summary'); };
   }
+}
+
+/* ---------- Her story ---------- */
+
+function renderStory() {
+  app.append(el('section', { class: 'trial trial-story' },
+    header(null),
+    el('div', { class: 'trial-grid' },
+      el('aside', { class: 'trial-side' }, photo('goddess-city', GODDESS)),
+      el('article', { class: 'trial-main letter' },
+        el('p', { class: 'kicker', text: STORY.kicker }),
+        el('h1', { tabindex: '-1', text: STORY.title }),
+        el('ul', { class: 'highlights' }, STORY.highlights.map((h) => el('li', { text: h }))),
+        STORY.paragraphs.map((text) => el('p', { text })),
+        el('p', { class: 'signoff', text: `— ${STORY.signoff}` }),
+        el('div', { class: 'actions' },
+          el('button', { class: 'btn ghost', type: 'button', text: 'Back', onclick: () => go('gate') }),
+          el('button', { class: 'btn primary', type: 'button', text: 'I am ready for the trials', onclick: () => { bg.celebrate(); go('intro'); } }))))));
 }
 
 /* ---------- Ordinary trials ---------- */
@@ -235,7 +255,7 @@ function updateStars() {
   const his = { sun: sign.name, moon: known(state.answers.moon), rising: known(state.answers.rising) };
   const reading = compatibility(his, CONFIG.chart);
   box.replaceChildren(
-    el('p', { class: 'sun' }, `${sign.glyph} You are a `, el('strong', { text: sign.name }), ' sun',
+    el('p', { class: 'sun' }, `${sign.glyph}\uFE0E You are a `, el('strong', { text: sign.name }), ' sun',
       sign.onCusp ? el('span', { class: 'hint', text: ' (born on a cusp, so check your exact chart)' }) : null),
     el('div', { class: 'meter', role: 'meter', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': reading.score, 'aria-label': 'Cosmic compatibility' },
       el('span', { style: `width:${reading.score}%` })),

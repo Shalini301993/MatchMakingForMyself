@@ -1,9 +1,9 @@
 // A zodiac wheel that turns to bring his sun sign to the top, with her Leo sun and
-// Capricorn moon and rising marked in gold.
+// Capricorn moon and rising softly marked.
 
 import { SIGNS } from './astro.js';
 
-const ELEMENT_COLORS = { fire: '#e8451e', earth: '#8a6a2b', air: '#3f8fb5', water: '#3b4fa8' };
+const ELEMENT_COLORS = { fire: '#8f6fc4', earth: '#7a6b8f', air: '#9a8cc0', water: '#6f64a8' };
 
 export function createZodiac(container, hers) {
   let api = { setSign() {} };
@@ -22,7 +22,7 @@ export function createZodiac(container, hers) {
       canvas.elt.setAttribute('role', 'img');
       canvas.elt.setAttribute('aria-label', 'Zodiac wheel');
       p.textAlign(p.CENTER, p.CENTER);
-      p.textFont('serif');
+      p.textFont('Cormorant Garamond, Georgia, serif');
     };
 
     p.draw = () => {
@@ -32,10 +32,10 @@ export function createZodiac(container, hers) {
       p.translate(p.width / 2, p.height / 2);
 
       p.noStroke();
-      p.fill(255, 248, 232, 235);
+      p.fill(255, 255, 255, 235);
       p.circle(0, 0, r * 2);
-      p.stroke('#c9962b');
-      p.strokeWeight(2);
+      p.stroke('#d9cdee');
+      p.strokeWeight(1);
       p.noFill();
       p.circle(0, 0, r * 2);
       p.circle(0, 0, r * 1.3);
@@ -46,30 +46,30 @@ export function createZodiac(container, hers) {
         const isHers = [hers.sun, hers.moon, hers.rising].includes(sign.name);
         p.push();
         p.rotate(a + step / 2);
-        p.stroke('#c9962b');
+        p.stroke('#ebe4f6');
         p.strokeWeight(1);
         p.line(r * 0.65, 0, r, 0);
         p.pop();
         const x = Math.cos(a) * r * 0.83;
         const y = Math.sin(a) * r * 0.83;
         p.noStroke();
-        if (isHis) { p.fill('#ff8a00'); p.circle(x, y, r * 0.3); }
-        else if (isHers) { p.fill(255, 210, 120, 160); p.circle(x, y, r * 0.24); }
+        if (isHis) { p.fill('#7c5cc4'); p.circle(x, y, r * 0.3); }
+        else if (isHers) { p.fill(201, 182, 232, 120); p.circle(x, y, r * 0.24); }
         p.fill(isHis ? '#fff' : ELEMENT_COLORS[sign.element]);
         p.textSize(r * 0.17);
-        p.text(sign.glyph, x, y + 1);
+        p.text(`${sign.glyph}\uFE0E`, x, y + 1);
       });
 
       // Pointer at the top.
-      p.fill('#c8331f');
+      p.fill('#7c5cc4');
       p.noStroke();
       p.triangle(-9, -r - 2, 9, -r - 2, 0, -r + 14);
 
-      p.fill('#3a1a0a');
+      p.fill('#2d2640');
       p.textSize(r * 0.13);
       p.text(his ?? 'Your sign?', 0, -6);
       p.textSize(r * 0.08);
-      p.fill('#8a5a2b');
+      p.fill('#8a7fa3');
       p.text(`Hers: ☉ ${hers.sun} · ☽ ${hers.moon}`, 0, r * 0.14);
     };
 

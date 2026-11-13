@@ -4,7 +4,7 @@
 import { SIGNS } from './astro.js';
 
 const SIGN_OPTIONS = [
-  ...SIGNS.map((s) => ({ value: s.name, label: `${s.glyph} ${s.name}` })),
+  ...SIGNS.map((s) => ({ value: s.name, label: `${s.glyph}\uFE0E ${s.name}` })),
   { value: 'unknown', label: "I don't know" },
 ];
 

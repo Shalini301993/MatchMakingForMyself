@@ -39,6 +39,10 @@ const proceed = (page) => page.locator('button[type=submit]').click();
 
 async function introAndGate(page, overrides = {}) {
   await page.getByRole('button', { name: /Begin the trials/ }).click();
+  assert.equal(await h1(page), 'How I got here');
+  assert.match(await page.locator('.letter').innerText(), /8 languages[\s\S]*PTSD[\s\S]*— Shalini/);
+  if (overrides.storyShot) await shot(page, overrides.storyShot);
+  await page.getByRole('button', { name: /ready for the trials/ }).click();
   assert.equal(await h1(page), 'Who approaches?');
   // Required fields are enforced.
   await proceed(page);
@@ -69,7 +73,7 @@ async function introAndGate(page, overrides = {}) {
   assert.equal(await page.locator('.tarot img').count(), 3);
   await page.waitForTimeout(600);
   await shot(page, '01-gate-phone');
-  await introAndGate(page);
+  await introAndGate(page, { storyShot: '01b-story-phone' });
   await shot(page, '02-gate-of-truth-phone');
   await proceed(page);
 

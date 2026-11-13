@@ -1,6 +1,6 @@
-# Tests the quest, then publishes it to GitHub Pages when Settings → Pages → Source is
-# "GitHub Actions". With "Deploy from a branch", GitHub publishes the repository itself
-# (no build step is needed) and this workflow only runs the tests.
+# Tests the quest, then publishes it to GitHub Pages.
+# Needs Settings → Pages → Source set to "GitHub Actions"; until then the
+# "configure-pages" step fails with a message saying Pages is not enabled.
 name: Deploy to GitHub Pages
 
 on:
@@ -37,29 +37,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-      - name: See how Pages is set up
-        id: pages
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          type=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo off)
-          echo "type=$type" >> "$GITHUB_OUTPUT"
-          if [ "$type" = "legacy" ]; then
-            echo "::notice::Pages deploys from a branch, so GitHub publishes the site itself."
-          elif [ "$type" != "workflow" ]; then
-            echo "::notice::GitHub Pages is not switched on yet (Settings → Pages → Source: GitHub Actions)."
-          fi
       - name: Collect the site files
-        if: steps.pages.outputs.type == 'workflow'
         run: |
           mkdir -p _site
           cp -r index.html config.js .nojekyll assets src styles vendor _site/
       - uses: actions/configure-pages@v5
-        if: steps.pages.outputs.type == 'workflow'
       - uses: actions/upload-pages-artifact@v4
-        if: steps.pages.outputs.type == 'workflow'
         with:
           path: _site
       - id: deployment
-        if: steps.pages.outputs.type == 'workflow'
         uses: actions/deploy-pages@v4

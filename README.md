@@ -3,7 +3,7 @@
 A matchmaking quest for the browser. A man who wants a date with Shalini passes through the
 **Gate of Truth** (dealbreakers), then nine themed trials: rapid fire, the stars (astrology and
 Human Design), love languages, strengths and weaknesses, past relationships, caretaking, family,
-and desire. At the end he reviews his answers, then copies or downloads them and sends them to Shalini.
+and desire. At the end he reviews his answers and offers them; they land in Shalini's private inbox.
 
 It opens with Shalini's own story, then the trials. The look is lavender minimalism: white space,
 thin lines and quiet type, with [p5.js](https://p5js.org/) drawing the softly drifting lavender
@@ -24,7 +24,7 @@ backdrop and the zodiac wheel over plain HTML forms. A static site for GitHub Pa
 | VII · Trial of the Vow | Would he take care of her emotionally, sexually and financially, how much (1–10), and how |
 | VIII · Trial of the Hearth | Kids wanted, when, the wife he envisions, the husband he will be |
 | IX · Trial of Desire | 18+, behind a veil, skippable: frequency, ~34 kinks (Yes / Maybe / No), hard limits |
-| The offering | He reviews everything, edits anything, then copies or downloads it to send to her |
+| The offering | He reviews everything, edits anything, then offers it to her private inbox |
 
 Progress saves in his browser, so a refresh loses nothing.
 
@@ -40,29 +40,52 @@ Drug use, prenup stance and number of partners are **recorded only**. When he is
 sees a kind goodbye. His copy of the answers is marked `Turned away: <reason>`. To change a rule, edit the `values` list for that question (the
 possible values are the `value`s in [`src/questions.js`](src/questions.js)).
 
-## Receiving answers
+## Private inbox
 
-Nothing is sent anywhere automatically. On the last screen he copies or downloads his answers
-(a plain-text file) and sends them to you himself, by message or email.
+Every finished (or turned-away) quest can be saved to your own free [Supabase](https://supabase.com)
+database, and you read them at **`inbox.html`** on the site
+(`https://shalini301993.github.io/MatchMakingForMyself/inbox.html`): list, search, filter
+Worthy / Turned away / Starred, read each scroll, star, download or delete.
 
-The game can also post answers straight to a Google Form, which saves them to a Google Sheet.
-That is switched off while `formId` in [`config.js`](config.js) is empty. To switch it on later:
+Anyone can *add* an offering, but only you can *read* one. That rule lives in the database
+(row-level security in [`supabase/setup.sql`](supabase/setup.sql)), so the key in `config.js` is safe
+to publish: it can only add rows, never read them.
 
-1. Create a Google Form with these 14 questions: `Verdict`, `Name`, `Contact`, `Age`, `City`
-   (short answer), then `Gate of Truth`, `Trial of Fire`, `Trial of the Stars`,
-   `Trial of the Heart`, `Trial of the Mirror`, `Trial of Memory`, `Trial of the Vow`,
-   `Trial of the Hearth`, `Trial of Desire` (paragraph). None required.
-2. Publish it to **Anyone with the link**, with email collection and "Limit to 1 response" off,
-   so no sign-in is needed.
-3. Use **⋮ → Get pre-filled link**, then copy the long id after `/d/e/` into `formId` and each
-   `entry.NNNNNN` into the matching field in `config.js`.
+Until it is set up, the game falls back to asking him to copy or download his answers and send them
+to you.
+
+**One-time setup (about 5 minutes):**
+
+1. Sign up at supabase.com (free) and create a **New project**. Any name, a strong database
+   password, the region nearest you.
+2. Open **SQL Editor → New query**, paste all of [`supabase/setup.sql`](supabase/setup.sql) and
+   click **Run**.
+3. Open **Authentication → Users → Add user → Create new user**. Enter your email and a password,
+   and tick **Auto confirm**. This is your inbox login.
+4. Back in the **SQL Editor**, run this one line with your own email:
+   `insert into public.inbox_readers select id from auth.users where email = 'you@example.com';`
+5. Optional but recommended: in **Authentication → Sign In / Providers**, turn off
+   **Allow new users to sign up**.
+6. Open **Project Settings → API** (called **API Keys** / **Data API** in newer dashboards) and copy
+   the **Project URL** and the **anon** (or **publishable**) key. Never the `service_role` or
+   secret key. Put them in `config.js` under `storage`, or send them to Claude to do it.
+7. Open `inbox.html` on the site and sign in.
+
+Supabase pauses free projects after a week with no activity. If that happens, open the project in
+the dashboard and click **Restore**.
+
+### Optional: a Google Form instead
+
+The game can also post to a Google Form (`googleForm` in `config.js`): 14 questions (`Verdict`,
+`Name`, `Contact`, `Age`, `City`, then one paragraph question per trial), published to **Anyone
+with the link** with no sign-in, and the `entry.NNNNNN` ids from **⋮ → Get pre-filled link**.
 
 ## Privacy
 
 - The repository and the site are public: anyone with the link sees the photos and your name. The
   photos had their location and camera metadata removed.
-- His answers never leave his browser unless he sends them to you, and the site tells him so
-  before he starts.
+- His answers go only to your private Supabase inbox (or, until it is set up, only to you when he
+  sends them). The title screen tells him which before he starts.
 - Your chart in `config.js` holds only your signs, not your birth date.
 
 ## Publishing on GitHub Pages
@@ -78,7 +101,7 @@ on every push to `main`, at
 |---|---|
 | Her story | [`src/story.js`](src/story.js) |
 | Questions, options, kinks list | [`src/questions.js`](src/questions.js) |
-| Dealbreakers, your signs, the optional form | [`config.js`](config.js) |
+| Dealbreakers, your signs, inbox storage | [`config.js`](config.js) |
 | Photos | Replace the files in [`assets/photos/`](assets/photos/) (keep the names), or add one in `PHOTOS` in `src/questions.js` |
 | Colours and fonts | [`styles/main.css`](styles/main.css) (the tokens at the top) |
 | The background animation | [`src/background.js`](src/background.js) |

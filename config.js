@@ -6,7 +6,15 @@ export const CONFIG = {
   // Her chart, used for the compatibility reading in the Trial of the Stars.
   chart: { sun: 'Leo', moon: 'Capricorn', rising: 'Capricorn' },
 
-  // Google Form that receives every finished (or turned-away) questionnaire.
+  // Private inbox (Supabase). Fill both in to save every offering to your own database, read
+  // them at inbox.html. The anon / publishable key is meant to be public: the database only lets
+  // it ADD offerings, never read them. See README → "Private inbox".
+  storage: {
+    url: '',      // Project URL, e.g. https://abcdefgh.supabase.co
+    anonKey: '',  // Project API key: "anon" or "publishable"
+  },
+
+  // Optional alternative: a Google Form that receives every finished (or turned-away) questionnaire.
   // Until formId is filled in, the site runs in demo mode: nothing is sent, and at the end
   // he can copy or download his answers instead. See README → "Receiving answers".
   googleForm: {

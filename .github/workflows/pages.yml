@@ -40,7 +40,7 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir -p _site
-          cp -r index.html config.js .nojekyll assets src styles vendor _site/
+          cp -r index.html inbox.html config.js .nojekyll assets src styles vendor _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

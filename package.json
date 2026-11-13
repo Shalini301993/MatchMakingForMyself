@@ -1,0 +1,12 @@
+{
+  "name": "worthy-of-the-goddess",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A p5.js matchmaking quest: nine trials for a man who wants a date with the goddess.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "node tests/smoke.mjs"
+  }
+}

@@ -198,6 +198,111 @@ async function introAndGate(page, overrides = {}) {
   await context.close();
 }
 
+// ---------- 4. Private inbox: offerings are stored, and only she can read them ----------
+{
+  const source = await readFile(new URL('../config.js', import.meta.url), 'utf8');
+  const config = source
+    .replace("url: '',      // Project URL", "url: 'https://stub.supabase.co', // Project URL")
+    .replace("anonKey: '',  // Project API key", "anonKey: 'pub-key', // Project API key");
+  assert.notEqual(config, source);
+  const db = [];
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'apikey, authorization, content-type, prefer',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  };
+  const fakeSupabase = async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    const json = (status, body) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: body == null ? '' : JSON.stringify(body) });
+    if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    const h = req.headers();
+    if (h.apikey !== 'pub-key') return json(401, { message: 'Invalid API key' });
+    if (url.pathname === '/auth/v1/token') {
+      const body = req.postDataJSON();
+      if (body.password !== 'moonlight') return json(400, { error_description: 'Invalid login credentials' });
+      return json(200, { access_token: 'AT', refresh_token: 'RT', expires_in: 3600, user: { email: body.email } });
+    }
+    const signedIn = h.authorization === 'Bearer AT';
+    const id = url.searchParams.get('id')?.replace(/^eq\./, '');
+    if (req.method() === 'POST') { db.push({ id: `o${db.length + 1}`, created_at: new Date(Date.now() + db.length * 1000).toISOString(), starred: false, ...req.postDataJSON() }); return json(201, null); }
+    if (!signedIn) return json(401, { message: 'permission denied for table offerings' });
+    if (req.method() === 'GET') return json(200, [...db].reverse());
+    if (req.method() === 'PATCH') { Object.assign(db.find((r) => r.id === id), req.postDataJSON()); return json(204, null); }
+    if (req.method() === 'DELETE') { db.splice(db.findIndex((r) => r.id === id), 1); return json(204, null); }
+    return json(405, null);
+  };
+
+  // A turned-away seeker, then a worthy one, both saved without any hand-off.
+  for (const drinking of ['I drink to get drunk', null]) {
+    const { context, page } = await open({ scale: 1, config });
+    await page.route('https://stub.supabase.co/**', fakeSupabase);
+    assert.match(await page.locator('.promises').innerText(), /only she can read them/);
+    await introAndGate(page, drinking ? { drinking } : {});
+    await proceed(page);
+    if (drinking) {
+      await page.waitForSelector('text=The goddess wishes you well');
+    } else {
+      for (let i = 0; i < 7; i++) await proceed(page);
+      await page.getByRole('button', { name: 'Skip this trial' }).click();
+      await page.getByRole('button', { name: /Offer it to the goddess/ }).click();
+      await page.waitForSelector('text=The goddess will be in touch');
+    }
+    assert.equal(await page.locator('.handoff').count(), 0, 'saved, so no copy/download hand-off');
+    await context.close();
+  }
+  assert.equal(db.length, 2);
+  assert.equal(db[0].passed, false);
+  assert.match(db[0].verdict, /Turned away: drinks heavily/);
+  assert.equal(db[1].passed, true);
+  assert.match(db[1].sections.truth, /How do you drink\? Socially/);
+  assert.equal(db[1].answers.name, 'Arjun Rao');
+
+  // The inbox: wrong password, right password, filter, read, star, delete.
+  for (const [label, size] of [['desktop', { width: 1280, height: 860 }], ['phone', { width: 390, height: 844 }]]) {
+    const context = await browser.newContext({ viewport: size, deviceScaleFactor: 2 });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => problems.push(`inbox pageerror: ${error.message}`));
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
+    await page.route('**/config.js', (route) => route.fulfill({ contentType: 'text/javascript', body: config }));
+    await page.route('https://stub.supabase.co/**', fakeSupabase);
+    await page.goto(`${base}inbox.html`);
+    await page.getByLabel('Email').fill('me@example.com');
+    await page.getByLabel('Password').fill('wrong');
+    await page.getByRole('button', { name: 'Enter' }).click();
+    await page.waitForSelector('text=Invalid login credentials');
+    await page.getByLabel('Password').fill('moonlight');
+    await page.getByRole('button', { name: 'Enter' }).click();
+    await page.waitForSelector('.offer-item');
+    assert.equal(await page.locator('.offer-item').count(), db.length);
+    await page.getByRole('tab', { name: /Worthy/ }).click();
+    assert.equal(await page.locator('.offer-item').count(), 1);
+    await page.getByRole('tab', { name: /^All/ }).click();
+    if (label === 'desktop') {
+      await page.locator('.offer-item', { hasText: 'Arjun Rao' }).first().click();
+      await page.waitForSelector('.offer-read');
+      assert.match(await page.locator('.offer-read').innerText(), /The Gate of Truth[\s\S]*Socially/);
+      await page.getByRole('button', { name: '☆ Star' }).click();
+      await page.waitForSelector('text=★ Starred');
+      assert.equal(db[1].starred, true);
+      await shot(page, '12-inbox-desktop');
+      // Signed in survives a reload.
+      await page.reload();
+      await page.waitForSelector('.offer-item');
+    } else {
+      await shot(page, '13-inbox-phone');
+      await page.locator('.offer-item', { hasText: 'Turned away' }).first().click();
+      page.once('dialog', (d) => d.accept());
+      await page.getByRole('button', { name: 'Delete' }).click();
+      await page.waitForFunction(() => document.querySelectorAll('.offer-item').length === 1);
+      assert.equal(db.length, 1);
+      await page.getByRole('button', { name: 'Sign out' }).click();
+      await page.waitForSelector('text=Only for the goddess');
+    }
+    await context.close();
+  }
+}
+
 await browser.close();
 server.close();
 if (problems.length) {

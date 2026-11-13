@@ -9,6 +9,7 @@ import { el, renderQuestion, missingRequired } from './ui.js';
 import { createBackground } from './background.js';
 import { createZodiac } from './zodiac.js';
 import { STORY } from './story.js';
+import { storageConfigured, saveOffering, buildRow } from './store.js';
 
 const STORE_KEY = 'goddess-quest-v1';
 const STEPS = ['gate', 'story', ...SECTIONS.map((s) => s.id), 'summary', 'end'];
@@ -106,7 +107,7 @@ function renderGate() {
         el('p', { class: 'lead', text: `She wears witch hats, speaks eight languages, and knows exactly what she wants. Nine trials stand between you and a date with ${GODDESS}. Answer honestly; the goddess can tell.` }),
         el('ul', { class: 'promises' },
           el('li', { text: 'About 20 minutes. Your progress is saved on this device.' }),
-          el('li', { text: `Nothing is sent anywhere. At the end you send your answers to ${GODDESS} yourself.` }),
+          el('li', { text: AUTO_SENDS ? `Your answers go privately to ${GODDESS}, and only she can read them.` : `Nothing is sent anywhere. At the end you send your answers to ${GODDESS} yourself.` }),
           el('li', { text: 'For men 18 and over. One trial is very personal.' })),
         state.finished
           ? el('p', { class: 'lead', text: 'You have already completed the quest. The goddess has your offering.' })
@@ -340,10 +341,23 @@ function currentPayload() {
   return payload;
 }
 
+const STORED = storageConfigured(CONFIG.storage);
+const AUTO_SENDS = STORED || isConfigured(CONFIG.googleForm);
+
 async function offer() {
   const payload = currentPayload();
-  const outcome = await send(payload, CONFIG.googleForm);
-  return { ...outcome, text: payloadToText(SECTIONS, payload) };
+  const text = payloadToText(SECTIONS, payload);
+  let outcome;
+  if (STORED) {
+    try {
+      outcome = await saveOffering(CONFIG.storage, buildRow(payload, state.answers, text));
+    } catch (error) {
+      outcome = { sent: false, error: error.message };
+    }
+  } else {
+    outcome = await send(payload, CONFIG.googleForm);
+  }
+  return { ...outcome, text };
 }
 
 function renderSummary() {
@@ -371,7 +385,7 @@ function renderSummary() {
       el('div', { class: 'trial-main' },
         el('p', { class: 'kicker', text: 'The offering' }),
         el('h1', { tabindex: '-1', text: 'Your scroll for the goddess' }),
-        el('p', { class: 'lead', text: `Read it over and change anything you like. When you offer it, you will copy or download it to send to ${GODDESS}.` }),
+        el('p', { class: 'lead', text: AUTO_SENDS ? `Read it over and change anything you like, then offer it. It goes privately to ${GODDESS}.` : `Read it over and change anything you like. When you offer it, you will copy or download it to send to ${GODDESS}.` }),
         el('div', { class: 'scroll' }, el('p', {}, el('strong', { text: payload.name || 'Unnamed seeker' }), ` · ${payload.age || '?'} · ${payload.city || 'somewhere'}`), blocks),
         el('div', { class: 'actions' },
           el('button', { class: 'btn ghost', type: 'button', text: 'Back', onclick: () => go(STEPS[STEPS.indexOf('summary') - 1]) }),
@@ -416,5 +430,5 @@ function renderEnd() {
 
 /* ---------- Boot ---------- */
 
-if (!isConfigured(CONFIG.googleForm)) document.documentElement.dataset.demo = 'true';
+if (!AUTO_SENDS) document.documentElement.dataset.demo = 'true';
 render(false);

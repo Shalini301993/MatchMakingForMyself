@@ -104,7 +104,7 @@ function renderGate() {
         el('p', { class: 'lead', text: `She rides tigers, wears witch hats, and knows exactly what she wants. Nine trials stand between you and a date with ${GODDESS}. Answer honestly; the goddess can tell.` }),
         el('ul', { class: 'promises' },
           el('li', { text: '⏳ About 20 minutes. Your progress is saved on this device.' }),
-          el('li', { text: `🔒 Your answers go privately to ${GODDESS}, nowhere else.` }),
+          el('li', { text: `🔒 Nothing is sent anywhere. At the end you send your answers to ${GODDESS} yourself.` }),
           el('li', { text: '🔞 For men 18 and over. One trial is very personal.' })),
         state.finished
           ? el('p', { class: 'lead', text: 'You have already completed the quest. The goddess has your offering.' })
@@ -351,7 +351,7 @@ function renderSummary() {
       el('div', { class: 'trial-main' },
         el('p', { class: 'kicker', text: 'The offering' }),
         el('h1', { tabindex: '-1', text: 'Your scroll for the goddess' }),
-        el('p', { class: 'lead', text: `Read it over. Change anything you like, then offer it. It goes privately to ${GODDESS}.` }),
+        el('p', { class: 'lead', text: `Read it over and change anything you like. When you offer it, you will copy or download it to send to ${GODDESS}.` }),
         el('div', { class: 'scroll' }, el('p', {}, el('strong', { text: payload.name || 'Unnamed seeker' }), ` · ${payload.age || '?'} · ${payload.city || 'somewhere'}`), blocks),
         el('div', { class: 'actions' },
           el('button', { class: 'btn ghost', type: 'button', text: 'Back', onclick: () => go(STEPS[STEPS.indexOf('summary') - 1]) }),
@@ -388,7 +388,7 @@ function renderEnd() {
       }),
       needsHandOff ? el('div', { class: 'handoff' },
         el('p', { text: result.demo
-          ? `This quest is in demo mode, so nothing was sent. Copy or download your answers and send them to ${GODDESS} yourself.`
+          ? `One last step: copy or download your scroll and send it to ${GODDESS} yourself. That is how she receives your offering.`
           : `Your offering could not be sent (${result.error ?? 'network error'}). Copy or download it and send it to ${GODDESS}.` }),
         el('div', { class: 'actions' }, copy, download),
         el('pre', { class: 'scroll' , text: result.text ?? '' })) : null)));
